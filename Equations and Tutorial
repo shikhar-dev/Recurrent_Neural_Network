@@ -1,0 +1,61 @@
+# Equations
+input layer size = 2  [il]
+hidden layer size = 16 [hl]
+output layer size = 1 [ol]
+Length of binary numbers = 10 (seq_len)
+
+see : basic_recurrence_singleton.png
+
+W1 is weight of layer 1, size = (hl,il)
+W2 is weight of layer 2, size = (ol,hl)
+W1rec is recurrence weights from layer1 (previous timestep) to layer1, size = (hl,hl)
+
+X is input matrix, size = (il,m)
+where 'm' is number of training examples
+
+Y is output, size = (ol,m)
+
+a1 is output of layer 1, size = (hl,m)
+
+a2 is ouptut of layer 2, size = (ol,m)
+
+'z' is the summation of corresponding layer, size same as 'a' :
+Consider a sinlge Neuron
+                ------------------------------------------------------
+    xi-------> || z = summation (wi * xi) + bi ||  a = activation(z) || -------> a
+                ------------------------------------------------------
+  Input  ||   summation over contribution of   || activating that summation   || Output
+          all input multiplied by their weigths
+
+We are using 'sigmoid' as activation fucntion :
+
+Now we have defined all the symbols, lets start with the Equations :
+
+# FORWARD PROPAGATION
+
+z1 = w1*X + w1rec*a1_last + b1             (where a1_last is output of layer 1 on previous timestep)                  #Layer 1
+a1 = sigmoid(z1)
+
+z2 = w2*a1 + b2                                                                                                       #layer 2 / Output Layer
+a2 = sigmoid(z2)
+
+# BACKWARD PROPAGATION THROUGH TIME
+
+dz2 = a2 - Y                                                                                                          #layer 2
+dw2 = 1/m*( dz2*(a1)' )
+db2 = (1/m)*dz2.sum(over all examples)
+
+dz1 = [(w2)' * dz2 + (w1rec)' * dz1_future ] (*) tanh'(z1)               # (*) -> Element wise multiplication      #layer 1
+dw1 = 1/m*( dz1 * (X)' )                                                    # dz1_future is the derivative of the next timestep of same layer
+dw1rec = 1/m*( dz1 * (a1_last)' )
+db1 = (1/m)*dz1.sum(over all examples)
+
+
+NOTE : Forward Prop will run seq_len number of timesteps from 1st timestep to 10th timestep (Prpagating outputs from 1 to 10 timesteps).
+       Forward Prop will run seq_len number of timesteps from 10th timestep to 1st timestep (Finding derivatives from 10 to 1 timesteps).
+
+****Backprop equations are pretty is to derive, if you understand the forward prop equations. All you have to do is apply chain rule and keep moving
+backward to find derivatives of parameters.
+For eg : let J be cost funcition then : dJ/dz1 = (dJ/a1) * da1/dz1
+                                 where  dJ/da1 = (dz2/da1 * dJ/dz2  + dz1_future/da1 * dJ/dz1_future )
+                                 and da1/dz1 and be found out by derivating the forward prop equations which invloves z1 and a1 or a1 = f(z1).
